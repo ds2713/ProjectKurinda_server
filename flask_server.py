@@ -6,9 +6,12 @@ app = Flask(__name__)
 
 def insert_data(value):
     conn = sqlite3.connect("Database/sensor_readings.db")
+    # dt = datetime.fromisoformat(datetime.now().isoformat())
+    dt = datetime.now().isoformat()
+    # timestamp_ms = int(dt.timestamp() * 1000)
     c = conn.cursor()
     c.execute("INSERT INTO readings (site_id, temperature, acceleration, soil_moisture, time) VALUES (?, ?, ?, ?, ?)",
-              (value['site_id'], value['temperature'], value['acceleration'], value['soil_moisture'], datetime.now()))
+              (value['site_id'], value['temperature'], value['acceleration'], value['soil_moisture'], dt))
     conn.commit()
     conn.close()
 
@@ -85,7 +88,8 @@ def get_data():
     result = []
     for row in rows:
         result.append({
-            "time": datetime.fromisoformat(row[0]).isoformat(),
+            # "time": datetime.fromisoformat(row[0]).isoformat(),
+            "time": row[0],
             "site_id": row[1],
             "temperature": row[2],
             "acceleration": row[3],
