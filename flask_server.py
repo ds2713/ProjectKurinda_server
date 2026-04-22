@@ -7,17 +7,62 @@ app = Flask(__name__)
 def insert_data(value):
     conn = sqlite3.connect("Database/sensor_readings.db")
     c = conn.cursor()
-    c.execute("INSERT INTO readings (value, time) VALUES (?, ?)",
-              (value, datetime.now()))
+    c.execute("INSERT INTO readings (site_id, temperature, acceleration, soil_moisture, time) VALUES (?, ?, ?, ?, ?)",
+              (value['site_id'], value['temperature'], value['acceleration'], value['soil_moisture'], datetime.now()))
     conn.commit()
     conn.close()
 
 @app.route('/data', methods=['POST'])
 def receive_data():
     data = request.json
-    value = data['value']
-    insert_data(value)
+    site_id = data['site_id']
+    temperature = data['temperature']
+    acceleration = data['acceleration']
+    soil_moisture = data['soil_moisture']
+    insert_data({
+        'site_id': site_id,
+        'temperature': temperature,
+        'acceleration': acceleration,
+        'soil_moisture': soil_moisture
+    })
     return {"status": "ok"}
+
+@app.route('/acceleration', methods=['GET'])
+def get_acceleration():
+    import sqlite3
+    from collections import defaultdict
+
+    conn = sqlite3.connect("Database/sensor_readings.db")
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT site_id, time, acceleration
+        FROM readings
+        ORDER BY time ASC
+    """)
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    series = defaultdict(list)
+
+    for site_id, time, acceleration in rows:
+        series[site_id].append({
+            "time": time,
+            "acceleration": acceleration
+        })
+
+    # Convert to Grafana-friendly format
+    result = []
+    for site_id, datapoints in series.items():
+        result.append({
+            "target": f"site_{site_id}",
+            "datapoints": [
+                [point["acceleration"], point["time"]] for point in datapoints
+            ]
+        })
+
+    return result
 
 @app.route('/data', methods=['GET'])
 def get_data():
@@ -27,7 +72,7 @@ def get_data():
     cursor = conn.cursor()
 
     cursor.execute("""
-        SELECT time, value 
+        SELECT time, site_id, temperature, acceleration, soil_moisture 
         FROM readings 
         ORDER BY time ASC
         LIMIT 100
@@ -41,7 +86,10 @@ def get_data():
     for row in rows:
         result.append({
             "time": datetime.fromisoformat(row[0]).isoformat(),
-            "value": row[1]
+            "site_id": row[1],
+            "temperature": row[2],
+            "acceleration": row[3],
+            "soil_moisture": row[4]
         })
 
     return result

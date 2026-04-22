@@ -5,10 +5,16 @@ import time
 URL = "http://127.0.0.1:5000/data"  # change if needed
 
 while True:
-    value = random.uniform(20, 30)  # random float
+    site_id = random.randint(1, 5)  # random site ID between 1 and 5
+    temperature = random.uniform(0, 45)  # random temperature
+    acceleration = random.uniform(-10, 10)  # random acceleration
+    soil_moisture = random.uniform(0, 100)  # random soil moisture
 
     data = {
-        "value": value
+        "site_id": site_id,
+        "temperature": temperature,
+        "acceleration": acceleration,
+        "soil_moisture": soil_moisture
     }
 
     try:
@@ -17,4 +23,4 @@ while True:
     except Exception as e:
         print("Error:", e)
 
-    time.sleep(5)  # send every 5 seconds#
+    time.sleep(0.1)  # send every 5 seconds#

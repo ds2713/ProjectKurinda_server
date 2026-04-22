@@ -6,7 +6,10 @@ c = conn.cursor()
 c.execute("""
 CREATE TABLE readings (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    value REAL,
+    site_id INTEGER,
+    temperature REAL,
+    acceleration REAL,
+    soil_moisture REAL,
     time TIMESTAMP
 )
 """)
